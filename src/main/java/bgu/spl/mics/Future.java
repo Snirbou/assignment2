@@ -11,12 +11,15 @@ import java.util.concurrent.TimeUnit;
  * No public constructor is allowed except for the empty constructor.
  */
 public class Future<T> {
-	
+
+	private T result = null;
+	private volatile boolean done = false; //Volatile is something GPT gave me - says its critical here
+
 	/**
 	 * This should be the the only public constructor in this class.
 	 */
 	public Future() {
-		//TODO: implement this
+		this.done = false;
 	}
 	
 	/**
@@ -27,9 +30,16 @@ public class Future<T> {
      * @return return the result of type T if it is available, if not wait until it is available.
      * 	       
      */
-	public T get() {
+	public synchronized T get() {
 		//TODO: implement this.
-		return null;
+		while(!this.done)
+			try {
+				wait();
+			}
+			catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+		return result;
 	}
 	
 	/**
@@ -37,6 +47,9 @@ public class Future<T> {
      */
 	public void resolve (T result) {
 		//TODO: implement this.
+		this.result = result;
+		this.done = true;
+		notifyAll();
 	}
 	
 	/**
@@ -44,7 +57,7 @@ public class Future<T> {
      */
 	public boolean isDone() {
 		//TODO: implement this.
-		return false;
+		return this.done;
 	}
 	
 	/**
@@ -52,7 +65,7 @@ public class Future<T> {
      * This method is non-blocking, it has a limited amount of time determined
      * by {@code timeout}
      * <p>
-     * @param timout 	the maximal amount of time units to wait for the result.
+     * @param timeout 	the maximal amount of time units to wait for the result.
      * @param unit		the {@link TimeUnit} time units to wait.
      * @return return the result of type T if it is available, if not, 
      * 	       wait for {@code timeout} TimeUnits {@code unit}. If time has
