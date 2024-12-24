@@ -12,14 +12,15 @@ import java.util.concurrent.TimeUnit;
  */
 public class Future<T> {
 
-	private T result = null;
-	private volatile boolean done = false; //Volatile is something GPT gave me - says its critical here
+	private T result;
+	private boolean done; //Volatile is something GPT gave me - says its critical here
 
 	/**
 	 * This should be the the only public constructor in this class.
 	 */
 	public Future() {
 		this.done = false;
+		this.result = null;
 	}
 	
 	/**
@@ -32,30 +33,32 @@ public class Future<T> {
      */
 	public synchronized T get() {
 		//TODO: implement this.
-		while(!this.done)
+		while (!this.done)
 			try {
 				wait();
-			}
-			catch (InterruptedException e) {
+			} catch (InterruptedException e) {
 				Thread.currentThread().interrupt();
 			}
 		return result;
 	}
-	
+
 	/**
      * Resolves the result of this Future object.
      */
-	public void resolve (T result) {
+	public synchronized void resolve (T result) {
 		//TODO: implement this.
-		this.result = result;
-		this.done = true;
-		notifyAll();
+		if(!done){
+			this.result = result;
+			this.done = true;
+			notifyAll();
+		}
+
 	}
 	
 	/**
      * @return true if this object has been resolved, false otherwise
      */
-	public boolean isDone() {
+	public synchronized boolean isDone() {
 		//TODO: implement this.
 		return this.done;
 	}
@@ -71,9 +74,27 @@ public class Future<T> {
      * 	       wait for {@code timeout} TimeUnits {@code unit}. If time has
      *         elapsed, return null.
      */
-	public T get(long timeout, TimeUnit unit) {
-		//TODO: implement this.
-		return null;
+		public synchronized T get(long timeout, TimeUnit unit) {
+			if (this.done) {
+				return result;  // Return immediately if already resolved
+			}
+
+			long millisTimeout = unit.toMillis(timeout);  // Convert timeout to milliseconds
+			long endTime = System.currentTimeMillis() + millisTimeout;  // Calculate end time
+
+			while (!this.done && millisTimeout > 0) {
+				try {
+					wait(millisTimeout);  // Wait for the specified duration
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();  // Preserve interrupt status
+					return null;  // Return null if interrupted
+				}
+				millisTimeout = endTime - System.currentTimeMillis();  // Update remaining time
+			}
+
+			return this.done ? result : null;  // Return result if done, else null
+		}
+
 	}
 
-}
+
