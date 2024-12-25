@@ -167,7 +167,7 @@ public abstract class MicroService implements Runnable {
 
             try {
                 msgToCallbackMap.get(mess.getClass()).call(mess);
-            } catch (NullPointerException e) {
+            } catch (NullPointerException | InterruptedException e) {
                 throw new NullPointerException();
             }
 

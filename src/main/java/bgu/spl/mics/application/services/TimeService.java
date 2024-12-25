@@ -38,6 +38,7 @@ public class TimeService extends MicroService {
         Thread t = new Thread(() -> {
             for (int i = 1; i <= duration; i++) {
                 sendBroadcast(new TickBroadcast(i));  // שלח טיק חדש עם מספר הטיק הנוכחי
+
                 try {
                     Thread.sleep(tickTime);  // השהייה לפי זמן הטיק
                 } catch (InterruptedException e) {
@@ -45,7 +46,7 @@ public class TimeService extends MicroService {
                     break;
                 }
             }
-            sendBroadcast(new TerminatedBroadcast());  // שדר סיום לכל השירותים
+            sendBroadcast(new TerminatedBroadcast(""));  // שדר סיום לכל השירותים
             terminate();  // סיים את TimeService
         });
         t.start();

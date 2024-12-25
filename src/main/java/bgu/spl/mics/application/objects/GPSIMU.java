@@ -9,16 +9,14 @@ import java.util.ArrayList;
 public class GPSIMU {
 
     private int currentTick;
-    private enum Status {
-        UP,
-        DOWN,
-        ERROR
-    };
+    private STATUS status;
     private ArrayList<Pose> PoseList;
 
     public GPSIMU(int currentTick, ArrayList<Pose> poseList) {
         this.currentTick = currentTick;
         PoseList = poseList;
+
+        status = STATUS.UP;
     }
 
     public int getCurrentTick() {
@@ -31,5 +29,9 @@ public class GPSIMU {
 
     public void setCurrentTick(int currentTick) {
         this.currentTick = currentTick;
+    }
+
+    public void setStatus(STATUS status) {
+        this.status = status;
     }
 }

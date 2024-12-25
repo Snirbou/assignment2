@@ -6,9 +6,7 @@ import bgu.spl.mics.application.messages.CrashedBroadcast;
 import bgu.spl.mics.application.messages.DetectObjectsEvent;
 import bgu.spl.mics.application.messages.TerminatedBroadcast;
 import bgu.spl.mics.application.messages.TickBroadcast;
-import bgu.spl.mics.application.objects.Camera;
-import bgu.spl.mics.application.objects.DetectedObject;
-import bgu.spl.mics.application.objects.TrackedObject;
+import bgu.spl.mics.application.objects.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,19 +39,29 @@ public class CameraService extends MicroService {
     @Override
     protected void initialize() {
         subscribeBroadcast(TickBroadcast.class, (TickBroadcast c) -> {
-            DetectObjectsEvent e = camera.handleTick(c.getTick());
-            if(e != null) {
-                Future<List<TrackedObject>> fut = sendEvent(e);
-                //if(fut.get() == false)
+            int currTick = c.getTick();
+            StampedDetectedObjects currDetect = camera.getDetectedObjectList().get(currTick);
+
+            if(currDetect != null){ //Camera did not get anything in this tick
+                DetectObjectsEvent e = new DetectObjectsEvent(currDetect.getDetectedObjects(), currTick, camera.getId());
+//            DetectObjectsEvent e = camera.handleTick(c.getTick());
+                if(e != null) {
+                    Future<List<TrackedObject>> fut = sendEvent(e);
+                    //if(fut.get() == false)
                     //crash?????????
+                }
             }
+
+
         });
         subscribeBroadcast(TerminatedBroadcast.class, (TerminatedBroadcast c) -> {
             terminate();
+            this.camera.setStatus(STATUS.DOWN);
         });
 
         subscribeBroadcast(CrashedBroadcast.class, (CrashedBroadcast c) -> {
            //CRASH SOMEHOW
+            this.camera.setStatus(STATUS.ERROR);
         });
     }
 

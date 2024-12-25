@@ -5,7 +5,12 @@ import bgu.spl.mics.application.messages.PoseEvent;
 import bgu.spl.mics.application.messages.TerminatedBroadcast;
 import bgu.spl.mics.application.messages.TickBroadcast;
 import bgu.spl.mics.application.messages.TrackedObjectsEvent;
+import bgu.spl.mics.application.objects.CloudPoint;
 import bgu.spl.mics.application.objects.FusionSlam;
+import bgu.spl.mics.application.objects.LandMark;
+import bgu.spl.mics.application.objects.TrackedObject;
+
+import java.util.ArrayList;
 
 
 /**
@@ -15,6 +20,8 @@ import bgu.spl.mics.application.objects.FusionSlam;
  * This service receives TrackedObjectsEvents from LiDAR workers and PoseEvents from the PoseService,
  * transforming and updating the map with new landmarks.
  */
+
+
 
 
 public class FusionSlamService extends MicroService {
@@ -28,7 +35,7 @@ public class FusionSlamService extends MicroService {
 
     public FusionSlamService(FusionSlam fusionSlam) {
         super("Fusion Slam");
-        this.fusion = fusionSlam;
+        this.fusion = FusionSlam.getInstance();
     }
 
     /**
@@ -38,12 +45,41 @@ public class FusionSlamService extends MicroService {
      */
     @Override
     protected void initialize() {
-        subscribeBroadcast(TrackedObjectsEvent.class, (TrackedObjectsEvent<> trackedObj) -> {
-            //FILL UP CALLBACK
+        subscribeEvent(TrackedObjectsEvent.class, (TrackedObjectsEvent trackedObj) -> {
+            ArrayList<TrackedObject> currTracked = trackedObj.getTrackedObjects();
+            for(TrackedObject tracked : currTracked)
+            {
+                boolean flag = false;
+                for(LandMark landmark : fusion.getLandmark())
+                {
+                    if(!flag && landmark.getId() == tracked.getId())
+                    {
+                        flag = true;
+                        ArrayList<CloudPoint> makeAvg = new ArrayList<>();
+                        int INDEX;
+                        for (INDEX = 0; INDEX < landmark.getCoordinates().size(); INDEX++)
+                        {
+                            double avgX = (tracked.getCoordinates().get(INDEX).getX() + landmark.getCoordinates().get(INDEX).getX()) / 2;
+                            double avgY = (tracked.getCoordinates().get(INDEX).getY() + landmark.getCoordinates().get(INDEX).getY()) / 2;
+                            makeAvg.add(new CloudPoint(avgX, avgY));
+                        }
+
+                        for(; INDEX < tracked.getCoordinates().size(); INDEX++) //ADD REMAINDER IN CASE ITS LONGER
+                            makeAvg.add(new CloudPoint(tracked.getCoordinates().get(INDEX).getX(), tracked.getCoordinates().get(INDEX).getY()));
+                        landmark.setCoordinates(makeAvg);
+                    }
+                }
+                if(!flag)
+                {
+                    LandMark copied = new LandMark(tracked.getId(), tracked.getDescription(), tracked.getCoordinates());
+                    this.fusion.getLandmark().add(copied);
+                }
+            }
+
         });
 
-        subscribeBroadcast(PoseEvent.class, (PoseEvent<Boolean> pose) -> {
-            //FILL UP CALLBACK
+        subscribeEvent(PoseEvent.class, (PoseEvent pose) -> {
+            this.fusion.getPoses().add(pose.getCurrentPose());
         });
 
         subscribeBroadcast(TerminatedBroadcast.class, (TerminatedBroadcast c) -> {

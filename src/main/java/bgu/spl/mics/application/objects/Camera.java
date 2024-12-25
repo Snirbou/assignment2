@@ -3,6 +3,7 @@ package bgu.spl.mics.application.objects;
 import bgu.spl.mics.application.messages.DetectObjectsEvent;
 
 import java.util.ArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Represents a camera sensor on the robot.
@@ -13,19 +14,17 @@ public class Camera {
 
     private int id;
     private int frequency;
-    private enum Status {
-        UP,
-        DOWN,
-        ERROR
-    };
+    private STATUS Status;
 
-    private ArrayList<StampedDetectedObjects> totalDetectedObjectList;
+    private ConcurrentHashMap<Integer, StampedDetectedObjects> totalDetectedObjectMap;
 
 
-    public Camera(int id, int frequency, ArrayList<StampedDetectedObjects> detectedObjectList) {
+    public Camera(int id, int frequency, ConcurrentHashMap<Integer, StampedDetectedObjects> totalDetectedObjectMap) {
         this.id = id;
         this.frequency = frequency;
-        this.totalDetectedObjectList = detectedObjectList;
+        this.totalDetectedObjectMap = totalDetectedObjectMap;
+
+        Status = STATUS.UP;
     }
 
     public int getId() {
@@ -36,13 +35,17 @@ public class Camera {
         return frequency;
     }
 
-    public ArrayList<StampedDetectedObjects> getDetectedObjectList() {
-        return totalDetectedObjectList;
+    public ConcurrentHashMap<Integer, StampedDetectedObjects> getDetectedObjectList() {
+        return totalDetectedObjectMap;
     }
 
-    public DetectObjectsEvent handleTick(int tick)
-    {
-        StampedDetectedObjects currObjects = totalDetectedObjectList.get(tick);
-        return new DetectObjectsEvent(currObjects.getDetectedObjects(), tick, id);
+    public void setStatus(STATUS status) {
+        Status = status;
     }
+
+    //    public DetectObjectsEvent handleTick(int tick)
+//    {
+//        StampedDetectedObjects currObjects = totalDetectedObjectList.get(tick);
+//        return new DetectObjectsEvent(currObjects.getDetectedObjects(), tick, id);
+//    }
 }
