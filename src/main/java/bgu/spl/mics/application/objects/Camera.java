@@ -49,6 +49,8 @@ public class Camera {
             if (stamped.getTime() == tick)
             {
                 delayedDetectedObjectList.add(new StampedDetectedObjects(tick + frequency, stamped.getDetectedObjects()));
+                for(DetectedObject obj : stamped.getDetectedObjects())
+                    StatisticalFolder.getInstance().incrementDetectedObjects();
             }
         }
     }

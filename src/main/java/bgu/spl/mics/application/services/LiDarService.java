@@ -48,6 +48,7 @@ public class LiDarService extends MicroService {
                 if(trackedObj.getTime() == currTick)
                 {
                     toSend.add(trackedObj);
+                    StatisticalFolder.getInstance().incrementTrackedObjects();
                     //MAYBE DELETE FROM TRACKER
                 }
             }

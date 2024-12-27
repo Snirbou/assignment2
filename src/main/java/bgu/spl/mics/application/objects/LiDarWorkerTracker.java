@@ -22,6 +22,15 @@ public class LiDarWorkerTracker {
         this.Status = STATUS.UP;
     }
 
+
+    public LiDarWorkerTracker(int id, int frequency) {
+        this.id = id;
+        this.frequency = frequency;
+        this.lastTrackedObjects = new ArrayList<>();
+
+        this.Status = STATUS.UP;
+    }
+
     public int getId() {
         return id;
     }

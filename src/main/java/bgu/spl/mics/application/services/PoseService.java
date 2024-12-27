@@ -10,6 +10,8 @@ import bgu.spl.mics.application.objects.GPSIMU;
 import bgu.spl.mics.application.objects.Pose;
 import bgu.spl.mics.application.objects.STATUS;
 
+import java.util.ArrayList;
+
 /**
  * PoseService is responsible for maintaining the robot's current pose (position and orientation)
  * and broadcasting PoseEvents at every tick.
@@ -45,4 +47,9 @@ public class PoseService extends MicroService {
             terminate();
             this.gpsimu.setStatus(STATUS.DOWN);
         });    }
+
+    public void setPoses(ArrayList<Pose> poses)
+    {
+        this.gpsimu.setPoses(poses);
+    }
 }

@@ -28,4 +28,6 @@ public class StampedCloudPoints {
     public ArrayList<CloudPoint> getCloudPoints() {
         return cloudPoints;
     }
+
+
 }

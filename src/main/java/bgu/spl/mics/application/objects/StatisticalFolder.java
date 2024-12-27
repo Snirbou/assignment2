@@ -1,55 +1,82 @@
 package bgu.spl.mics.application.objects;
 
-/**
- * Holds statistical information about the system's operation.
- * This class aggregates metrics such as the runtime of the system,
- * the number of objects detected and tracked, and the number of landmarks identified.
- */
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class StatisticalFolder {
 
-    private int systemRuntime;
-    private int numDetectedObjects;
-    private int numTrackedObject;
-    private int numLandmarks;
-
-    private
-
-    public StatisticalFolder(int systemRuntime, int numDetectedObjects, int numTrackedObject, int numLandmarks) {
-        this.systemRuntime = systemRuntime;
-        this.numDetectedObjects = numDetectedObjects;
-        this.numTrackedObject = numTrackedObject;
-        this.numLandmarks = numLandmarks;
+    // Singleton Holder for Thread-Safe Initialization
+    private static class SingletonHolder {
+        private static final StatisticalFolder instance = new StatisticalFolder();
     }
 
-    public int getSystemRuntime() {
+    // Metrics tracked by StatisticalFolder
+    private AtomicInteger systemRuntime;
+    private AtomicInteger numDetectedObjects;
+    private AtomicInteger numTrackedObjects;
+    private AtomicInteger numLandmarks;
+
+    // Private constructor for singleton
+    private StatisticalFolder() {
+        this.systemRuntime = new AtomicInteger(0);
+        this.numDetectedObjects = new AtomicInteger(0);
+        this.numTrackedObjects = new AtomicInteger(0);
+        this.numLandmarks = new AtomicInteger(0);
+    }
+
+    // Public access to the singleton instance
+    public static StatisticalFolder getInstance() {
+        return SingletonHolder.instance;
+    }
+
+    // Increments system runtime by one tick
+    public void incrementRuntime() {
+        systemRuntime.incrementAndGet();
+    }
+
+    // Increments the number of detected objects (from CameraService)
+    public void incrementDetectedObjects() {
+        numDetectedObjects.incrementAndGet();
+    }
+
+    // Increments the number of tracked objects (from LiDARService)
+    public void incrementTrackedObjects() {
+        numTrackedObjects.incrementAndGet();
+    }
+
+    // Updates the number of landmarks when a new landmark is added (from FusionSlamService)
+    public void incrementLandmarks() {
+        numLandmarks.incrementAndGet();
+    }
+
+    // Generate a report summarizing system statistics
+    public String generateReport() {
+        return String.format(
+                "System Statistics:\n" +
+                        "Runtime (ticks): %d\n" +
+                        "Detected Objects: %d\n" +
+                        "Tracked Objects: %d\n" +
+                        "Landmarks: %d",
+                systemRuntime.get(),
+                numDetectedObjects.get(),
+                numTrackedObjects.get(),
+                numLandmarks.get()
+        );
+    }
+
+    public AtomicInteger getSystemRuntime() {
+
         return systemRuntime;
     }
 
-    public synchronized void setSystemRuntime(int systemRuntime) {
-        this.systemRuntime = systemRuntime;
-    }
-
-    public int getNumDetectedObjects() {
+    public AtomicInteger getNumDetectedObjects() {
         return numDetectedObjects;
     }
 
-    public synchronized void setNumDetectedObjects(int numDetectedObjects) {
-        this.numDetectedObjects = numDetectedObjects;
+    public AtomicInteger getNumTrackedObjects() {
+        return numTrackedObjects;
     }
 
-    public int getNumTrackedObject() {
-        return numTrackedObject;
-    }
-
-    public synchronized void setNumTrackedObject(int numTrackedObject) {
-        this.numTrackedObject = numTrackedObject;
-    }
-
-    public int getNumLandmarks() {
+    public AtomicInteger getNumLandmarks() {
         return numLandmarks;
-    }
-
-    public synchronized void setNumLandmarks(int numLandmarks) {
-        this.numLandmarks = numLandmarks;
     }
 }

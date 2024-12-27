@@ -62,6 +62,7 @@ public class FusionSlamService extends MicroService {
                 {
                     LandMark copied = new LandMark(tracked.getId(), tracked.getDescription(), tracked.getCoordinates());
                     this.fusion.getLandmark().add(copied);
+                    StatisticalFolder.getInstance().incrementLandmarks();
                 }
             }
 
@@ -74,4 +75,8 @@ public class FusionSlamService extends MicroService {
         subscribeBroadcast(TerminatedBroadcast.class, (TerminatedBroadcast c) -> {
             terminate();
         });    }
+
+    public FusionSlam getFusion() {
+        return fusion;
+    }
 }

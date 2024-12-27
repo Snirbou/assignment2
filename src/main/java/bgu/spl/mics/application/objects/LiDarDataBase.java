@@ -1,8 +1,12 @@
 package bgu.spl.mics.application.objects;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 
+import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -15,27 +19,12 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class LiDarDataBase {
 
-    private static LiDarDataBase INSTANCE = null;
+    // Thread-safe SingletonHolder for Lazy Initialization
+    private static class SingletonHolder {
+        private static final LiDarDataBase INSTANCE = new LiDarDataBase();
+    }
+
     private ConcurrentHashMap<Integer, ArrayList<StampedCloudPoints>> cloudPoints;
-
-    /**
-     * Returns the singleton instance of LiDarDataBase.
-     *
-     * @param filePath The path to the LiDAR data file.
-     * @return The singleton instance of LiDarDataBase.
-     */
-    public static synchronized LiDarDataBase getInstance(String filePath) {
-        if (INSTANCE == null) {
-            INSTANCE = new LiDarDataBase();
-            INSTANCE.loadData(filePath);
-        }
-        return INSTANCE;
-    }
-
-    public static LiDarDataBase getInstance()
-    {
-        return INSTANCE;
-    }
 
     /**
      * Private constructor to enforce singleton pattern.
@@ -44,29 +33,91 @@ public class LiDarDataBase {
         cloudPoints = new ConcurrentHashMap<>();
     }
 
+    /**
+     * Returns the singleton instance of LiDarDataBase.
+     *
+     * @return The singleton instance of LiDarDataBase.
+     */
+    public static LiDarDataBase getInstance() {
+        return SingletonHolder.INSTANCE;
+    }
+
+    /**
+     * Returns the singleton instance of LiDarDataBase, with optional data loading.
+     *
+     * @param filePath The path to the LiDAR data file.
+     * @return The singleton instance of LiDarDataBase.
+     */
+    public static synchronized LiDarDataBase getInstance(String filePath) {
+        LiDarDataBase instance = SingletonHolder.INSTANCE;
+        instance.loadData(filePath);
+        return instance;
+    }
 
     /**
      * Loads LiDAR data from a JSON file.
      *
      * @param filePath The path to the LiDAR data file.
      */
-    private void loadData(String filePath) {
-        try (FileReader reader = new FileReader(filePath)) {
+//    public void loadData(String filePath) {
+//        try (FileReader reader = new FileReader(filePath)) {
+//            Gson gson = new Gson();
+//            List<StampedCloudPoints> data = gson.fromJson(reader, new TypeToken<List<StampedCloudPoints>>() {}.getType());
+//
+//            for (StampedCloudPoints points : data) {
+//                cloudPoints.computeIfAbsent(points.getTime(), k -> new ArrayList<>()).add(points);
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//            throw new RuntimeException("Failed to load LiDAR data from " + filePath);
+//        }
+//    }
+    public void loadData(String path) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(path))) {
             Gson gson = new Gson();
-            List<StampedCloudPoints> data = gson.fromJson(reader, new TypeToken<List<StampedCloudPoints>>() {}.getType());
+            StringBuilder jsonBuilder = new StringBuilder();
 
-            for (StampedCloudPoints points : data) {
-                cloudPoints.computeIfAbsent(points.getTime(), k -> new ArrayList<>()).add(points);
+            // Read the JSON file line-by-line
+            String line;
+            while ((line = reader.readLine()) != null) {
+                jsonBuilder.append(line.trim());
+            }
+
+            // Parse the full JSON string into a JsonArray
+            JsonArray jsonArray = gson.fromJson(jsonBuilder.toString(), JsonArray.class);
+            // Process each JSON object in the array
+            for (JsonElement element : jsonArray) {
+                JsonObject jsonObject = element.getAsJsonObject();
+                // Extract components
+                int time = jsonObject.get("time").getAsInt();
+                String id = jsonObject.get("id").getAsString();
+                JsonArray cloudPointsArray = jsonObject.get("cloudPoints").getAsJsonArray();
+                ArrayList<CloudPoint> cloudPointslist = new ArrayList<>();
+                for (JsonElement cPoint : cloudPointsArray) {
+                    JsonArray point = cPoint.getAsJsonArray();
+                    double x = point.get(0).getAsDouble();
+                    double y = point.get(1).getAsDouble();
+                    cloudPointslist.add(new CloudPoint(x, y));
+                }
+
+                StampedCloudPoints temp = new StampedCloudPoints(id, time, cloudPointslist);
+                cloudPoints.get(time).add(temp);
+                cloudPointslist.clear();
+                if (cloudPoints.size() == 13)
+                    cloudPoints.toString();
             }
         } catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Failed to load LiDAR data from " + filePath);
+            throw new RuntimeException(e);
         }
     }
 
+    /**
+     * Retrieves cloud points by time tick.
+     *
+     * @param tick The time tick to query.
+     * @return List of cloud points at the given tick.
+     */
     public ArrayList<StampedCloudPoints> getCloudPointsByTime(int tick) {
         return cloudPoints.getOrDefault(tick, new ArrayList<>());
     }
-
-
 }

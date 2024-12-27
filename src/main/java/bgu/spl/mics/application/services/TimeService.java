@@ -5,6 +5,7 @@ import bgu.spl.mics.application.messages.CrashedBroadcast;
 import bgu.spl.mics.application.messages.DetectObjectsEvent;
 import bgu.spl.mics.application.messages.TerminatedBroadcast;
 import bgu.spl.mics.application.messages.TickBroadcast;
+import bgu.spl.mics.application.objects.StatisticalFolder;
 
 import java.util.List;
 
@@ -39,7 +40,7 @@ public class TimeService extends MicroService {
         Thread t = new Thread(() -> {
             for (int i = 1; i <= duration; i++) {
                 sendBroadcast(new TickBroadcast(i));  // שלח טיק חדש עם מספר הטיק הנוכחי
-
+                StatisticalFolder.getInstance().incrementRuntime();
                 try {
                     Thread.sleep(tickTime);  // השהייה לפי זמן הטיק
                 } catch (InterruptedException e) {
@@ -51,7 +52,7 @@ public class TimeService extends MicroService {
             sendBroadcast(new TerminatedBroadcast("TimeService"));  // שדר סיום לכל השירותים
             terminate();  // סיים את TimeService
         });
-        t.start();
+        //t.start();
 
         subscribeBroadcast(TerminatedBroadcast.class, (TerminatedBroadcast c) -> {
             terminate();

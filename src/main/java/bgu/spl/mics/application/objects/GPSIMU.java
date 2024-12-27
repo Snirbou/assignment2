@@ -19,6 +19,17 @@ public class GPSIMU {
         status = STATUS.UP;
     }
 
+    public GPSIMU() {
+        this.currentTick = 0; //NOT SURE BOUT THIS ONE
+        PoseList = new ArrayList<>();
+
+        status = STATUS.UP;
+    }
+
+    public void setPoses(ArrayList<Pose> poseList) {
+        PoseList = poseList;
+    }
+
     public int getCurrentTick() {
         return currentTick;
     }
