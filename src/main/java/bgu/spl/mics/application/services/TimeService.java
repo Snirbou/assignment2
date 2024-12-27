@@ -1,6 +1,7 @@
 package bgu.spl.mics.application.services;
 
 import bgu.spl.mics.MicroService;
+import bgu.spl.mics.application.messages.CrashedBroadcast;
 import bgu.spl.mics.application.messages.DetectObjectsEvent;
 import bgu.spl.mics.application.messages.TerminatedBroadcast;
 import bgu.spl.mics.application.messages.TickBroadcast;
@@ -43,10 +44,11 @@ public class TimeService extends MicroService {
                     Thread.sleep(tickTime);  // השהייה לפי זמן הטיק
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();  // אם הופרע, סיים את הלולאה
+                    sendBroadcast(new CrashedBroadcast("TimeService"));
                     break;
                 }
             }
-            sendBroadcast(new TerminatedBroadcast(""));  // שדר סיום לכל השירותים
+            sendBroadcast(new TerminatedBroadcast("TimeService"));  // שדר סיום לכל השירותים
             terminate();  // סיים את TimeService
         });
         t.start();

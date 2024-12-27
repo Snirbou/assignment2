@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class LiDarDataBase {
 
     private static LiDarDataBase INSTANCE = null;
-    private ConcurrentHashMap<Integer, List<StampedCloudPoints>> cloudPoints;
+    private ConcurrentHashMap<Integer, ArrayList<StampedCloudPoints>> cloudPoints;
 
     /**
      * Returns the singleton instance of LiDarDataBase.
@@ -64,7 +64,7 @@ public class LiDarDataBase {
         }
     }
 
-    public List<StampedCloudPoints> getCloudPointsByTime(int tick) {
+    public ArrayList<StampedCloudPoints> getCloudPointsByTime(int tick) {
         return cloudPoints.getOrDefault(tick, new ArrayList<>());
     }
 

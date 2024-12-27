@@ -40,10 +40,12 @@ public class CameraService extends MicroService {
     protected void initialize() {
         subscribeBroadcast(TickBroadcast.class, (TickBroadcast c) -> {
             int currTick = c.getTick();
-            StampedDetectedObjects currDetect = camera.getDetectedObjectList().get(currTick);
+            camera.retrieveCurrDetection(currTick);
 
-            if(currDetect != null){ //Camera did not get anything in this tick
-                DetectObjectsEvent e = new DetectObjectsEvent(currDetect.getDetectedObjects(), currTick, camera.getId());
+            StampedDetectedObjects toSend = camera.getObjsAtTime(currTick);
+
+            if(toSend != null){ //Camera did not get anything in this tick
+                DetectObjectsEvent e = new DetectObjectsEvent(toSend.getDetectedObjects(), currTick, camera.getFrequency(), camera.getId()); //POSSIBLE TIMING BUG
 //            DetectObjectsEvent e = camera.handleTick(c.getTick());
                 if(e != null) {
                     Future<List<TrackedObject>> fut = sendEvent(e);
@@ -51,7 +53,6 @@ public class CameraService extends MicroService {
                     //crash?????????
                 }
             }
-
 
         });
         subscribeBroadcast(TerminatedBroadcast.class, (TerminatedBroadcast c) -> {

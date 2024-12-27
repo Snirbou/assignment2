@@ -2,6 +2,7 @@ package bgu.spl.mics.application.objects;
 
 import bgu.spl.mics.application.messages.DetectObjectsEvent;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -16,14 +17,14 @@ public class Camera {
     private int frequency;
     private STATUS Status;
 
-    private ConcurrentHashMap<Integer, StampedDetectedObjects> totalDetectedObjectMap;
+    private ArrayList<StampedDetectedObjects> totalDetectedObjectList;
+    private ArrayList<StampedDetectedObjects> delayedDetectedObjectList;
 
-
-    public Camera(int id, int frequency, ConcurrentHashMap<Integer, StampedDetectedObjects> totalDetectedObjectMap) {
+    public Camera(int id, int frequency, ArrayList<StampedDetectedObjects> totalDetectedObjectsList) {
         this.id = id;
         this.frequency = frequency;
-        this.totalDetectedObjectMap = totalDetectedObjectMap;
-
+        this.totalDetectedObjectList = totalDetectedObjectsList;
+        this.delayedDetectedObjectList = new ArrayList<>();
         Status = STATUS.UP;
     }
 
@@ -35,17 +36,30 @@ public class Camera {
         return frequency;
     }
 
-    public ConcurrentHashMap<Integer, StampedDetectedObjects> getDetectedObjectList() {
-        return totalDetectedObjectMap;
+    public ArrayList<StampedDetectedObjects> getDetectedObjectList() {
+        return totalDetectedObjectList;
     }
 
     public void setStatus(STATUS status) {
         Status = status;
     }
 
-    //    public DetectObjectsEvent handleTick(int tick)
-//    {
-//        StampedDetectedObjects currObjects = totalDetectedObjectList.get(tick);
-//        return new DetectObjectsEvent(currObjects.getDetectedObjects(), tick, id);
-//    }
+    public void retrieveCurrDetection(int tick) {
+        for (StampedDetectedObjects stamped : totalDetectedObjectList) {
+            if (stamped.getTime() == tick)
+            {
+                delayedDetectedObjectList.add(new StampedDetectedObjects(tick + frequency, stamped.getDetectedObjects()));
+            }
+        }
+    }
+
+    public StampedDetectedObjects getObjsAtTime(int time) {
+
+        for (StampedDetectedObjects stamped : delayedDetectedObjectList) {
+            if (stamped.getTime() == time)
+                return stamped;
+
+        }
+        return null;
+    }
 }

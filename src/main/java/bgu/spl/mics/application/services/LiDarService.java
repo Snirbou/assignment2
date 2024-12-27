@@ -42,29 +42,41 @@ public class LiDarService extends MicroService {
         subscribeBroadcast(TickBroadcast.class, (TickBroadcast c) -> {
 
             int currTick = c.getTick();
-            int freq = tracker.getFrequency();
-
-            List<StampedCloudPoints> currStamped = LiDarDataBase.getInstance().getCloudPointsByTime(currTick - freq);
-
-            if(currStamped != null)
+            ArrayList<TrackedObject> toSend = new ArrayList<>();
+            for(TrackedObject trackedObj : tracker.getLastTrackedObjects())
             {
-                ArrayList<TrackedObject> trackedObjs = new ArrayList<>();
-
-                for(StampedCloudPoints stamped : currStamped)
+                if(trackedObj.getTime() == currTick)
                 {
-                    TrackedObject tracked = new TrackedObject(stamped.getID(), stamped.getTime(), "DESCRIPTION", stamped.getCloudPoints());
-                    trackedObjs.add(tracked);
+                    toSend.add(trackedObj);
+                    //MAYBE DELETE FROM TRACKER
                 }
+            }
 
-                TrackedObjectsEvent currTrackedEvent = new TrackedObjectsEvent(trackedObjs, currTick, tracker.getId());
 
+            if(!toSend.isEmpty())
+            {
+                TrackedObjectsEvent currTrackedEvent = new TrackedObjectsEvent(toSend, currTick, tracker.getId());
                 sendEvent(currTrackedEvent);
-
             }
 
         });
         subscribeEvent(DetectObjectsEvent.class, (DetectObjectsEvent detected) -> {
-            //CREATE TRACKED OBJECTS EVENT AND SEND IT
+
+            int detectTime = detected.getTime() - detected.getSenderFreq();
+            ArrayList<StampedCloudPoints> cloudPoints = LiDarDataBase.getInstance().getCloudPointsByTime(detectTime);
+            for (DetectedObject obj : detected.getDetectedObjects())
+            {
+                String objID = obj.getId();
+                String objDesc = obj.getDescription();
+                for(StampedCloudPoints cloudPoint : cloudPoints)
+                {
+                    if(objID.equals(cloudPoint.getID()))
+                        tracker.getLastTrackedObjects().add((new TrackedObject(objID, detectTime + tracker.getFrequency(), objDesc, cloudPoint.getCloudPoints())));
+                }
+            }
+
+
+
         });
         subscribeBroadcast(TerminatedBroadcast.class, (TerminatedBroadcast c) -> {
             terminate();

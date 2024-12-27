@@ -12,11 +12,13 @@ public class DetectObjectsEvent implements Event<List<TrackedObject>> {
     private final List<DetectedObject> detectedObjects;
     private final int time;
     private final int cameraId;
+    private final int senderFreq;
 
-    public DetectObjectsEvent(List<DetectedObject> detectedObjects, int time, int cameraId) {
+    public DetectObjectsEvent(List<DetectedObject> detectedObjects, int time, int cameraId, int senderFreq) {
         this.detectedObjects = detectedObjects;
         this.time = time;
         this.cameraId = cameraId;
+        this.senderFreq = senderFreq;
     }
 
     public List<DetectedObject> getDetectedObjects() {
@@ -31,4 +33,7 @@ public class DetectObjectsEvent implements Event<List<TrackedObject>> {
         return cameraId;
     }
 
+    public int getSenderFreq() {
+        return senderFreq;
+    }
 }

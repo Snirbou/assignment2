@@ -5,10 +5,7 @@ import bgu.spl.mics.application.messages.PoseEvent;
 import bgu.spl.mics.application.messages.TerminatedBroadcast;
 import bgu.spl.mics.application.messages.TickBroadcast;
 import bgu.spl.mics.application.messages.TrackedObjectsEvent;
-import bgu.spl.mics.application.objects.CloudPoint;
-import bgu.spl.mics.application.objects.FusionSlam;
-import bgu.spl.mics.application.objects.LandMark;
-import bgu.spl.mics.application.objects.TrackedObject;
+import bgu.spl.mics.application.objects.*;
 
 import java.util.ArrayList;
 
@@ -32,6 +29,7 @@ public class FusionSlamService extends MicroService {
      */
 
     private final FusionSlam fusion;
+    public Pose currentPose;
 
     public FusionSlamService(FusionSlam fusionSlam) {
         super("Fusion Slam");
@@ -49,23 +47,14 @@ public class FusionSlamService extends MicroService {
             ArrayList<TrackedObject> currTracked = trackedObj.getTrackedObjects();
             for(TrackedObject tracked : currTracked)
             {
+                LandMark transformed = fusion.translateCoordinateSys(tracked, this.currentPose);
                 boolean flag = false;
                 for(LandMark landmark : fusion.getLandmark())
                 {
-                    if(!flag && landmark.getId() == tracked.getId())
+                    if(!flag && landmark.getId().equals(transformed.getId()))
                     {
                         flag = true;
-                        ArrayList<CloudPoint> makeAvg = new ArrayList<>();
-                        int INDEX;
-                        for (INDEX = 0; INDEX < landmark.getCoordinates().size(); INDEX++)
-                        {
-                            double avgX = (tracked.getCoordinates().get(INDEX).getX() + landmark.getCoordinates().get(INDEX).getX()) / 2;
-                            double avgY = (tracked.getCoordinates().get(INDEX).getY() + landmark.getCoordinates().get(INDEX).getY()) / 2;
-                            makeAvg.add(new CloudPoint(avgX, avgY));
-                        }
-
-                        for(; INDEX < tracked.getCoordinates().size(); INDEX++) //ADD REMAINDER IN CASE ITS LONGER
-                            makeAvg.add(new CloudPoint(tracked.getCoordinates().get(INDEX).getX(), tracked.getCoordinates().get(INDEX).getY()));
+                        ArrayList<CloudPoint> makeAvg = fusion.averageCoordinates(landmark.getCoordinates(), tracked.getCoordinates());
                         landmark.setCoordinates(makeAvg);
                     }
                 }
@@ -79,7 +68,7 @@ public class FusionSlamService extends MicroService {
         });
 
         subscribeEvent(PoseEvent.class, (PoseEvent pose) -> {
-            this.fusion.getPoses().add(pose.getCurrentPose());
+            this.currentPose = pose.getCurrentPose();
         });
 
         subscribeBroadcast(TerminatedBroadcast.class, (TerminatedBroadcast c) -> {

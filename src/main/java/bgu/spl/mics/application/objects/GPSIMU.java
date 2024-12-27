@@ -34,4 +34,9 @@ public class GPSIMU {
     public void setStatus(STATUS status) {
         this.status = status;
     }
+
+    public void incrementTick()
+    {
+        currentTick++;
+    }
 }
