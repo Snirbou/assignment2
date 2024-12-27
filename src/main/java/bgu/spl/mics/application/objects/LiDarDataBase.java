@@ -24,7 +24,7 @@ public class LiDarDataBase {
         private static final LiDarDataBase INSTANCE = new LiDarDataBase();
     }
 
-    private ConcurrentHashMap<Integer, ArrayList<StampedCloudPoints>> cloudPoints;
+    private final ConcurrentHashMap<Integer, ArrayList<StampedCloudPoints>> cloudPoints;
 
     /**
      * Private constructor to enforce singleton pattern.
@@ -51,6 +51,8 @@ public class LiDarDataBase {
     public static synchronized LiDarDataBase getInstance(String filePath) {
         LiDarDataBase instance = SingletonHolder.INSTANCE;
         instance.loadData(filePath);
+        for(StampedCloudPoints cp : instance.getCloudPointsByTime(4))
+            System.out.println(cp.getID());
         return instance;
     }
 
@@ -59,57 +61,57 @@ public class LiDarDataBase {
      *
      * @param filePath The path to the LiDAR data file.
      */
-//    public void loadData(String filePath) {
-//        try (FileReader reader = new FileReader(filePath)) {
-//            Gson gson = new Gson();
-//            List<StampedCloudPoints> data = gson.fromJson(reader, new TypeToken<List<StampedCloudPoints>>() {}.getType());
-//
-//            for (StampedCloudPoints points : data) {
-//                cloudPoints.computeIfAbsent(points.getTime(), k -> new ArrayList<>()).add(points);
-//            }
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//            throw new RuntimeException("Failed to load LiDAR data from " + filePath);
-//        }
-//    }
-    public void loadData(String path) {
-        try (BufferedReader reader = new BufferedReader(new FileReader(path))) {
+    public void loadData(String filePath) {
+        try (FileReader reader = new FileReader(filePath)) {
             Gson gson = new Gson();
-            StringBuilder jsonBuilder = new StringBuilder();
+            List<StampedCloudPoints> data = gson.fromJson(reader, new TypeToken<List<StampedCloudPoints>>() {}.getType());
 
-            // Read the JSON file line-by-line
-            String line;
-            while ((line = reader.readLine()) != null) {
-                jsonBuilder.append(line.trim());
-            }
-
-            // Parse the full JSON string into a JsonArray
-            JsonArray jsonArray = gson.fromJson(jsonBuilder.toString(), JsonArray.class);
-            // Process each JSON object in the array
-            for (JsonElement element : jsonArray) {
-                JsonObject jsonObject = element.getAsJsonObject();
-                // Extract components
-                int time = jsonObject.get("time").getAsInt();
-                String id = jsonObject.get("id").getAsString();
-                JsonArray cloudPointsArray = jsonObject.get("cloudPoints").getAsJsonArray();
-                ArrayList<CloudPoint> cloudPointslist = new ArrayList<>();
-                for (JsonElement cPoint : cloudPointsArray) {
-                    JsonArray point = cPoint.getAsJsonArray();
-                    double x = point.get(0).getAsDouble();
-                    double y = point.get(1).getAsDouble();
-                    cloudPointslist.add(new CloudPoint(x, y));
-                }
-
-                StampedCloudPoints temp = new StampedCloudPoints(id, time, cloudPointslist);
-                cloudPoints.get(time).add(temp);
-                cloudPointslist.clear();
-                if (cloudPoints.size() == 13)
-                    cloudPoints.toString();
+            for (StampedCloudPoints points : data) {
+                cloudPoints.computeIfAbsent(points.getTime(), k -> new ArrayList<>()).add(points);
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
+            throw new RuntimeException("Failed to load LiDAR data from " + filePath);
         }
     }
+//    public void loadData(String path) {
+//        try (BufferedReader reader = new BufferedReader(new FileReader(path))) {
+//            Gson gson = new Gson();
+//            StringBuilder jsonBuilder = new StringBuilder();
+//
+//            // Read the JSON file line-by-line
+//            String line;
+//            while ((line = reader.readLine()) != null) {
+//                jsonBuilder.append(line.trim());
+//            }
+//
+//            // Parse the full JSON string into a JsonArray
+//            JsonArray jsonArray = gson.fromJson(jsonBuilder.toString(), JsonArray.class);
+//            // Process each JSON object in the array
+//            for (JsonElement element : jsonArray) {
+//                JsonObject jsonObject = element.getAsJsonObject();
+//                // Extract components
+//                int time = jsonObject.get("time").getAsInt();
+//                String id = jsonObject.get("id").getAsString();
+//                JsonArray cloudPointsArray = jsonObject.get("cloudPoints").getAsJsonArray();
+//                ArrayList<CloudPoint> cloudPointslist = new ArrayList<>();
+//                for (JsonElement cPoint : cloudPointsArray) {
+//                    JsonArray point = cPoint.getAsJsonArray();
+//                    double x = point.get(0).getAsDouble();
+//                    double y = point.get(1).getAsDouble();
+//                    cloudPointslist.add(new CloudPoint(x, y));
+//                }
+//
+//                StampedCloudPoints temp = new StampedCloudPoints(id, time, cloudPointslist);
+//                cloudPoints.get(time).add(temp);
+//                cloudPointslist.clear();
+//                if (cloudPoints.size() == 13)
+//                    cloudPoints.toString();
+//            }
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
 
     /**
      * Retrieves cloud points by time tick.
@@ -120,4 +122,5 @@ public class LiDarDataBase {
     public ArrayList<StampedCloudPoints> getCloudPointsByTime(int tick) {
         return cloudPoints.getOrDefault(tick, new ArrayList<>());
     }
+
 }

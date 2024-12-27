@@ -65,16 +65,18 @@ public class GurionRockRunner {
             }
             File file = new File(configFile);
             String parentDir = file.getParent();
+            //System.out.println(parentDir);
             // Parse the full JSON string into a JsonObject
             JsonObject configObject = gson.fromJson(jsonBuilder.toString(), JsonObject.class);
-
+            System.out.println(configObject.toString());
             // Extracting data from the "Cameras" section
+            System.out.println(configObject.getClass());
             JsonObject cameras = configObject.getAsJsonObject("Cameras");
             JsonArray camerasConfigurations = cameras.getAsJsonArray("CamerasConfigurations");
             String cameraDataPath = cameras.get("camera_datas_path").getAsString();
             String path = parentDir.concat(cameraDataPath);
             path = path.replaceFirst("[.]", "");
-
+            System.out.println(path);
             ReaderJsonCamera readerCamera = new ReaderJsonCamera(path);
 
             System.out.println(readerCamera.toString());

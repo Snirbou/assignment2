@@ -59,13 +59,14 @@ public class ReaderJsonCamera {
                         DetectedObject obj = new DetectedObject(id, description);
                         detectedObjectList.add(obj);
                     }
-                    StampedDetectedObjects stampedobj = stampedDetectedObjects.get(time);
-                    if (stampedobj != null) {
+                    if(stampedDetectedObjects.size() >=  time)
+                    {
+                        StampedDetectedObjects stampedobjA = stampedDetectedObjects.get(time);
                         for(DetectedObject detected : detectedObjectList)
-                            stampedobj.getDetectedObjects().add(detected);
+                            stampedobjA.getDetectedObjects().add(detected);
                     } else {
-                        stampedobj = new StampedDetectedObjects(time, detectedObjectList);
-                        stampedDetectedObjects.add(stampedobj);
+                        StampedDetectedObjects stampedobjB = new StampedDetectedObjects(time, detectedObjectList);
+                        stampedDetectedObjects.add(stampedobjB);
                     }
                 }
             }
