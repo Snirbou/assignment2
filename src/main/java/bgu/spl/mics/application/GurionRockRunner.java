@@ -108,7 +108,7 @@ public class GurionRockRunner {
             LiDarDataBase liDarDataBase = LiDarDataBase.getInstance();
             liDarDataBase.loadData(path);
 
-            //System.out.println(liDarDataBase.toString());
+            System.out.println(liDarDataBase);
 
             // Iterate through the LidarConfigurations array
             for (JsonElement lidarElement : lidarConfigurations) {

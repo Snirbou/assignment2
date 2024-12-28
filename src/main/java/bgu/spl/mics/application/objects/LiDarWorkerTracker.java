@@ -12,7 +12,7 @@ public class LiDarWorkerTracker {
     private int id;
     private int frequency;
     private STATUS Status;
-    private ArrayList<TrackedObject> lastTrackedObjects;
+    private final ArrayList<TrackedObject> lastTrackedObjects;
 
     public LiDarWorkerTracker(int id, int frequency, ArrayList<TrackedObject> lastTrackedObjects) {
         this.id = id;
